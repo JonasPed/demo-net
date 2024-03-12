@@ -1,10 +1,6 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using KitNugs.Configuration;
 using KitNugs.Logging;
-using KitNugs.Repository;
 using KitNugs.Services;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using Prometheus;
@@ -32,16 +28,6 @@ builder.Services.AddHttpContextAccessor();
 // Configure database
 var connectionString = builder.Configuration.GetConnectionString("db");
 
-builder.Services.AddDbContextPool<AppDbContext>(
-    dbContextOptions => dbContextOptions
-        .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
-        // The following three options help with debugging, but should
-        // be changed or removed for production.
-        //.LogTo(Console.WriteLine, LogLevel.Information)
-        //.EnableSensitiveDataLogging()
-        //.EnableDetailedErrors()
-);
-
 // Add controllers
 builder.Services.AddControllers().AddNewtonsoftJson(opts =>
 {
@@ -59,7 +45,6 @@ builder.Services.AddSwaggerGen();
 
 // Setup health checks and Prometheus endpoint
 builder.Services.AddHealthChecks()
-                .AddDbContextCheck<AppDbContext>()
                 .ForwardToPrometheus();
 
 var app = builder.Build();
@@ -84,13 +69,6 @@ app.MapControllers();
 app.UseHealthChecks("/healthz", 8081);
 app.UseMetricServer(8081, "/metrics");
 
-using (var scope = app.Services.CreateScope())
-{
-    using var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.Migrate();
-}
-
 app.Run();
-
 
 public partial class Program { }

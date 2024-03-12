@@ -1,5 +1,4 @@
 using KitNugs.Configuration;
-using KitNugs.Repository;
 using KitNugs.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -10,7 +9,6 @@ namespace UnitTest.Services
     public class HelloServiceTests
     {
         private IOptions<ServiceConfiguration> _options = null!;
-        private AppDbContext _dbContext = null!;
         private IHelloService _helloService = null!;
 
         [SetUp]
@@ -21,15 +19,8 @@ namespace UnitTest.Services
             _options = Substitute.For<IOptions<ServiceConfiguration>>();
             _options.Value.Returns(new ServiceConfiguration() { TEST_VAR = "VALUE" });
 
-            _dbContext = new TestDatabaseFixture().CreateContext();
 
-            _helloService = new HelloService(_options, logger, _dbContext);
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            _dbContext?.Dispose();
+            _helloService = new HelloService(_options, logger);
         }
 
         [Test]

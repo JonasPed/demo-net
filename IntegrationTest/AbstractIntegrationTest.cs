@@ -10,19 +10,15 @@ namespace IntegrationTest
     {
         protected static readonly ServiceClient client;
         protected static int servicePort = 8080;
-        private static string _connectionString;
 
         static AbstractIntegrationTest()
         {
             // Create network
             var network = new NetworkBuilder().Build();
 
-            StartDatabase(network);
-
             HttpClient? httpClient;
             if (Debugger.IsAttached)
             {
-                Environment.SetEnvironmentVariable("ConnectionStrings__db", _connectionString);
                 Environment.SetEnvironmentVariable("TEST_VAR", "TEST_VARIABLE");
 
                 var server = new WebApplicationFactory<Program>().Server;
@@ -50,7 +46,7 @@ namespace IntegrationTest
                 var image = new ImageFromDockerfileBuilder()
                     .WithDockerfileDirectory(CommonDirectoryPath.GetSolutionDirectory(), string.Empty)
                     .WithDockerfile("KitNugs/Dockerfile-fat")
-                    .WithName("kvalitetsit/kitnugs")
+                    .WithName("kvalitetsit/demo-net")
                     .WithCleanUp(false)
                     .Build();
 
@@ -59,7 +55,7 @@ namespace IntegrationTest
             }
 
             var service = new ContainerBuilder()
-                .WithImage("kvalitetsit/kitnugs:latest")
+                .WithImage("kvalitetsit/demo-net:latest")
                 .WithPortBinding(8080, true)
                 .WithPortBinding(8081, true)
                 .WithName("service-qa")
@@ -73,23 +69,6 @@ namespace IntegrationTest
                 .Wait();
 
             servicePort = service.GetMappedPublicPort(8080);
-        }
-
-        private static void StartDatabase(INetwork network)
-        {
-            // Create and start database container
-            var db = new Testcontainers.MariaDb.MariaDbBuilder()
-                .WithUsername("hellouser")
-                .WithNetwork(network)
-                .WithName("db-qa")
-                .WithPassword("secret1234")
-                .WithDatabase("hellodb")
-                .Build();
-
-            db.StartAsync()
-                .Wait();
-
-            _connectionString = db.GetConnectionString();
         }
     }
 }
